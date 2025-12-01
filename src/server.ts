@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { Pool } from "pg";
 import dotenv from "dotenv";
 import path from "path";
@@ -46,8 +46,15 @@ const initDB = async () => {
 };
 initDB();
 
+// logger middleware
+
+const logger = (req: Request, res: Response, next: NextFunction) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}\n`);
+  next();
+};
+
 // normal get method
-app.get("/", (req: Request, res: Response) => {
+app.get("/", logger, (req: Request, res: Response) => {
   res.send("Hello World next level developer!");
 });
 
@@ -230,6 +237,108 @@ app.get("/todos", async (req: Request, res: Response) => {
       details: error,
     });
   }
+});
+
+// todo single crud get
+app.get("/todos/:id", async (req: Request, res: Response) => {
+  // console.log(req.params.id)
+  try {
+    const result = await pool.query(`SELECT * FROM todos WHERE id = $1`, [
+      req.params.id,
+    ]);
+
+    if (result.rows.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "Todo not found",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "Todos fetch successfully",
+        data: result.rows[0],
+      });
+    }
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      details: error,
+    });
+  }
+});
+
+//todos put method crud
+app.put("/todos/:id", async (req: Request, res: Response) => {
+  // console.log(req.params.id)
+  const { user_id, title } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE todos 
+       SET user_id=$1, title=$2, updated_at=NOW() 
+       WHERE id=$3 
+       RETURNING *`,
+      [user_id, title, req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "todos not founds",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "todos Updated successfully",
+        data: result.rows[0],
+      });
+    }
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      details: error,
+    });
+  }
+});
+
+// todo deleted crud
+app.delete("/todos/:id", async (req: Request, res: Response) => {
+  // console.log(req.params.id)
+  try {
+    const result = await pool.query(
+      `DELETE FROM todos WHERE id = $1 RETURNING *`,
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "Todos not found",
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "Todos deleted successfully",
+        data: null,
+      });
+    }
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      details: error,
+    });
+  }
+});
+
+// not found route
+app.use((req: Request, res: Response) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+    path: req.path,
+  });
 });
 
 // LISTEN PORT
