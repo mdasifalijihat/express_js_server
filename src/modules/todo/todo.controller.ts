@@ -1,33 +1,33 @@
 import { Request, Response } from "express";
-import { pool } from "../../config/db";
-import { userService } from "./user.service";
+import { todoServices } from "./todo.services";
 
-const createUser = async (req: Request, res: Response) => {
-  const { name, email } = req.body;
+// todo crated CRUD
+const createdTodo = async (req: Request, res: Response) => {
+  const { user_id, title } = req.body;
 
   try {
-    const result = await userService.createUser(name, email);
-    // console.log(result.rows[0]);
+    const result = await todoServices.todoUserCreated(user_id, title);
+
     res.status(201).json({
-      success: false,
-      message: "User inserted successfully",
+      success: true,
+      message: "Todos crate ",
       data: result.rows[0],
     });
-  } catch (error: any) {
-    return res.status(500).json({
+  } catch (err: any) {
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: err.message,
     });
   }
 };
 
-// get all users
-const getUser = async (req: Request, res: Response) => {
+// todo get crud all
+const todoGetAll = async (req: Request, res: Response) => {
   try {
-    const result = await userService.getUser();
+    const result = await todoServices.todoGetAll();
     res.status(200).json({
       success: true,
-      message: "Users retrieved successfully",
+      message: "Todos Res successfully",
       data: result.rows,
     });
   } catch (error: any) {
@@ -39,22 +39,22 @@ const getUser = async (req: Request, res: Response) => {
   }
 };
 
-// single user
+// todo single crud
 
-const getSingleUser = async (req: Request, res: Response) => {
+const todoSingleGet = async (req: Request, res: Response) => {
   // console.log(req.params.id)
   try {
-    const result = await userService.getSingleUser(req.params.id as string);
+    const result = await todoServices.todoSingleGet(req.params.id as string);
 
     if (result.rows.length === 0) {
       res.status(404).json({
         success: false,
-        message: "users not found",
+        message: "Todo not found",
       });
     } else {
       res.status(200).json({
         success: true,
-        message: "User fetched successfully",
+        message: "Todos fetch successfully",
         data: result.rows[0],
       });
     }
@@ -67,26 +67,26 @@ const getSingleUser = async (req: Request, res: Response) => {
   }
 };
 
-// update users
-const updateUser = async (req: Request, res: Response) => {
+// todos update crud
+const todoUpdates = async (req: Request, res: Response) => {
   // console.log(req.params.id)
-  const { name, email } = req.body;
+  const { user_id, title } = req.body;
   try {
-    const result = await userService.updateUser(
-      name,
-      email,
+    const result = await todoServices.todoUpdate(
+      user_id,
+      title,
       req.params.id as string
     );
 
     if (result.rows.length === 0) {
       res.status(404).json({
         success: false,
-        message: "users not found",
+        message: "todos not founds",
       });
     } else {
       res.status(200).json({
         success: true,
-        message: "User Updated successfully",
+        message: "todos Updated successfully",
         data: result.rows[0],
       });
     }
@@ -99,20 +99,22 @@ const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-// delete users
-const userDeleted = async (req: Request, res: Response) => {
+// todos deleted
+
+const todoDeletes = async (req: Request, res: Response) => {
   // console.log(req.params.id)
   try {
-    const result = await userService.userDeleted(req.params.id as string);
+    const result = await todoServices.todoDeleted(req.params.id as string);
+
     if (result.rows.length === 0) {
       res.status(404).json({
         success: false,
-        message: "users not found",
+        message: "Todos not found",
       });
     } else {
       res.status(200).json({
         success: true,
-        message: "User deleted successfully",
+        message: "Todos deleted successfully",
         data: null,
       });
     }
@@ -125,10 +127,10 @@ const userDeleted = async (req: Request, res: Response) => {
   }
 };
 
-export const userController = {
-  createUser,
-  getUser,
-  getSingleUser,
-  updateUser,
-  userDeleted,
+export const todoController = {
+  createdTodo,
+  todoGetAll,
+  todoSingleGet,
+  todoUpdates,
+  todoDeletes,
 };
